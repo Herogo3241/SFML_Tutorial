@@ -115,11 +115,17 @@ int main()
     
 
     sf::ContextSettings settings;
-    settings.antialiasingLevel = 1;
+    settings.antialiasingLevel = 8 ;
 
     sf::RenderWindow window(sf::VideoMode(800, 800), "Dino Game", sf::Style::Fullscreen | sf::Style::Close, settings);
+    window.setFramerateLimit(60);
 
-    sf::CircleShape player(20, 3);
+	sf::View camera(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y));
+
+    sf::RectangleShape background(sf::Vector2f(window.getSize().x * 2, window.getSize().y * 2)); // Larger than the window size
+    background.setFillColor(sf::Color(100, 100, 250));
+
+    sf::CircleShape player(10, 3);
 
 	player.setOrigin(player.getRadius(), player.getRadius());
 	player.setPosition(window.getSize().x / 2, window.getSize().y / 2);
@@ -167,6 +173,11 @@ int main()
 
 		updatePlayerPosition(player, keyboard, deltaTime);
         handleShooting(player);
+
+		camera.setCenter(player.getPosition());
+        sf::Vector2f backgroundPosition = player.getPosition() * 0.5f; 
+        background.setPosition(backgroundPosition);
+		window.setView(camera);
        
 
         
@@ -178,6 +189,7 @@ int main()
 
 	
         window.clear(sf::Color::Black);
+		window.draw(background);    
 		window.draw(player);
         for (const auto& bullet : bullets) {
             window.draw(bullet.shape);
