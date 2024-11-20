@@ -4,7 +4,7 @@
 
 Bullet::Bullet(sf::Vector2f position, float angle)
 {
-    shape.setRadius(5.0f);
+    shape.setRadius(3.0f);
     shape.setFillColor(sf::Color::White);
     shape.setPosition(position);
 
@@ -18,3 +18,5 @@ void Bullet::update(float deltaTime)
 {
     shape.move(velocity * deltaTime * 500.f);
 }
+
+

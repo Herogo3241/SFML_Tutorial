@@ -4,10 +4,11 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 
-#define M_PI 3.14159265358979323846
+#define M_PI  3.14159265358979323846;
 
 class Bullet
 {
+private:
 public:
     sf::CircleShape shape;
     sf::Vector2f velocity;

@@ -134,11 +134,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Bullets.cpp" />
+    <ClCompile Include="Collisions.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameOverScreen.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainMenu.cpp" />
     <ClCompile Include="Player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bullets.h" />
+    <ClInclude Include="Collisions.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="GameOverScreen.h" />
+    <ClInclude Include="MainMenu.h" />
     <ClInclude Include="Player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
