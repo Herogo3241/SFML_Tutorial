@@ -93,7 +93,7 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
     playText.setOrigin(playBounds.left + playBounds.width / 2.0f, playBounds.top);
     playText.setPosition(
         window.getSize().x / 2.0f,
-        window.getSize().y * 0.6f
+        window.getSize().y * 0.5f
     );
 
     // Exit Text
@@ -107,7 +107,7 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
     exitText.setOrigin(exitBounds.left + exitBounds.width / 2.0f, exitBounds.top);
     exitText.setPosition(
         window.getSize().x / 2.0f,
-        window.getSize().y * 0.7f
+        window.getSize().y * 0.6f
     );
 
 
@@ -122,12 +122,12 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
     howToPlayText.setOrigin(howToPlayBounds.left + howToPlayBounds.width / 2.0f, howToPlayBounds.top);
     howToPlayText.setPosition(
         window.getSize().x / 2.0f,
-        window.getSize().y * 0.8f
+        window.getSize().y * 0.7f
     );
 
     // How to Play Background
     howToPlayBackground.setSize(sf::Vector2f(window.getSize().x * 0.8f, window.getSize().y * 0.7f));
-    howToPlayBackground.setFillColor(sf::Color(0, 0, 0, 200));
+    howToPlayBackground.setFillColor(sf::Color(0, 0, 0));
     howToPlayBackground.setPosition(
         window.getSize().x * 0.1f,
         window.getSize().y * 0.15f
@@ -165,13 +165,73 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
         window.getSize().x / 2.0f,
         window.getSize().y * 0.2f
     );
+
+
+    // Options Text
+    optionsText.setFont(font);
+    optionsText.setString("OPTIONS");
+    optionsText.setCharacterSize(48);
+    optionsText.setFillColor(sf::Color::White);
+
+    // Center options text
+    sf::FloatRect optionsBounds = optionsText.getLocalBounds();
+    optionsText.setOrigin(optionsBounds.left + optionsBounds.width / 2.0f, optionsBounds.top);
+    optionsText.setPosition(
+        window.getSize().x / 2.0f,
+        window.getSize().y * 0.8f
+    );
+
+    // Options Background
+    optionsBackground.setSize(sf::Vector2f(window.getSize().x * 0.8f, window.getSize().y * 0.7f));
+    optionsBackground.setFillColor(sf::Color(0, 0, 0, 200));
+    optionsBackground.setPosition(
+        window.getSize().x * 0.1f,
+        window.getSize().y * 0.15f
+    );
+
+    // Volume Slider Background
+    volumeSliderBackground.setSize(sf::Vector2f(window.getSize().x * 0.6f, 10));
+    volumeSliderBackground.setFillColor(sf::Color(100, 100, 100));
+    volumeSliderBackground.setPosition(
+        window.getSize().x * 0.2f,
+        window.getSize().y * 0.5f
+    );
+
+    // Volume Slider
+    volumeSlider.setSize(sf::Vector2f(20, 30));
+    volumeSlider.setFillColor(sf::Color::White);
+    volumeSlider.setPosition(
+        window.getSize().x * 0.2f + (volumeSliderBackground.getSize().x * currentVolume),
+        volumeSliderBackground.getPosition().y - 10
+    );
+
+    // Volume Text
+    volumeText.setFont(font);
+    volumeText.setString("VOLUME");
+    volumeText.setCharacterSize(36);
+    volumeText.setFillColor(sf::Color::White);
+    sf::FloatRect volumeTextBounds = volumeText.getLocalBounds();
+    volumeText.setOrigin(volumeTextBounds.left + volumeTextBounds.width / 2.0f, volumeTextBounds.top);
+    volumeText.setPosition(
+        window.getSize().x / 2.0f,
+        window.getSize().y * 0.4f
+    );
+
+    
+
+    // Music 
+	buffer.loadFromFile("click.mp3");
+	sound.setBuffer(buffer);
+    
 }
 
-bool MainMenu::run(sf::RenderWindow& window, Game& game) {
+bool MainMenu::run(sf::RenderWindow& window, Game& game, GameOverScreen& gameOver) {
     sf::Clock animationClock;
     float glowIntensity = 0.0f;
+    bool isDraggingSlider = false;
 
     while (window.isOpen()) {
+        
         sf::Event event;
         while (window.pollEvent(event)) {
             // Event handling
@@ -183,21 +243,96 @@ bool MainMenu::run(sf::RenderWindow& window, Game& game) {
             // Mouse position
             sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
+            if (!isHowToPlayVisible && !isOptionsVisible) {
+                // Options text interactions
+                if (optionsText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    optionsText.setFillColor(sf::Color(100, 150, 250)); // Blue highlight
+                    if (event.type == sf::Event::MouseButtonPressed &&
+                        event.mouseButton.button == sf::Mouse::Left) {
+                        sound.play();
+                        isOptionsVisible = true;
+                    }
+                }
+                else {
+                    optionsText.setFillColor(sf::Color::White);
+                    sound.stop();
+                }
+            }
+
+            // Close Options overlay
+            if (isOptionsVisible) {
+                // Slider interaction
+                if (event.type == sf::Event::MouseButtonPressed &&
+                    event.mouseButton.button == sf::Mouse::Left) {
+                    sf::FloatRect sliderBounds = volumeSlider.getGlobalBounds();
+                    sf::FloatRect sliderBackgroundBounds = volumeSliderBackground.getGlobalBounds();
+
+                    // Check if clicked on slider or slider background
+                    if (sliderBounds.contains(mousePos.x, mousePos.y)) {
+                        isDraggingSlider = true;
+                    }
+                    else if (sliderBackgroundBounds.contains(mousePos.x, mousePos.y)) {
+                        // Move slider to clicked position
+                        float newX = std::max(volumeSliderBackground.getPosition().x,
+                            std::min(static_cast<float>(mousePos.x),
+                                volumeSliderBackground.getPosition().x + volumeSliderBackground.getSize().x));
+
+                        currentVolume = (newX - volumeSliderBackground.getPosition().x) / volumeSliderBackground.getSize().x;
+
+                        // Update slider position and sound volume
+                        volumeSlider.setPosition(newX - volumeSlider.getSize().x / 2, volumeSlider.getPosition().y);
+                        sound.setVolume(currentVolume * 100.0f);
+                    }
+                }
+
+                // Slider dragging
+                if (event.type == sf::Event::MouseMoved && isDraggingSlider) {
+                    float newX = std::max(volumeSliderBackground.getPosition().x,
+                        std::min(static_cast<float>(mousePos.x),
+                            volumeSliderBackground.getPosition().x + volumeSliderBackground.getSize().x));
+
+                    currentVolume = (newX - volumeSliderBackground.getPosition().x) / volumeSliderBackground.getSize().x;
+
+                    // Update slider position and sound volume
+                    volumeSlider.setPosition(newX - volumeSlider.getSize().x / 2, volumeSlider.getPosition().y);
+                    sound.setVolume(currentVolume * 100.0f);
+					game.clickSound.setVolume(currentVolume * 100.0f);
+					gameOver.sound.setVolume(currentVolume * 100.0f);
+
+                }
+
+                // Release slider
+                if (event.type == sf::Event::MouseButtonReleased &&
+                    event.mouseButton.button == sf::Mouse::Left) {
+                    isDraggingSlider = false;
+                }
+
+                // Close Options overlay when clicking outside
+                sf::FloatRect overlayBounds = optionsBackground.getGlobalBounds();
+                if (event.type == sf::Event::MouseButtonPressed &&
+                    event.mouseButton.button == sf::Mouse::Left &&
+                    !overlayBounds.contains(mousePos.x, mousePos.y)) {
+                    isOptionsVisible = false;
+                }
+            }
+
             
 
 
-            if (!isHowToPlayVisible) {
+            if (!isHowToPlayVisible && !isOptionsVisible) {
                 // Play text interactions
                 if (playText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                     playText.setFillColor(sf::Color(255, 215, 0)); // Gold color
                     if (event.type == sf::Event::MouseButtonPressed &&
                         event.mouseButton.button == sf::Mouse::Left) {
+                        sound.play();
 						game.reset();
                         return true; // Start game
                     }
                 }
                 else {
                     playText.setFillColor(sf::Color::White);
+                    sound.stop();
                 }
 
                 // Exit text interactions
@@ -205,6 +340,7 @@ bool MainMenu::run(sf::RenderWindow& window, Game& game) {
                     exitText.setFillColor(sf::Color(220, 20, 60)); // Crimson
                     if (event.type == sf::Event::MouseButtonPressed &&
                         event.mouseButton.button == sf::Mouse::Left) {
+                        sound.play();
                         window.close();
                         return false;
                     }
@@ -219,17 +355,23 @@ bool MainMenu::run(sf::RenderWindow& window, Game& game) {
                 howToPlayText.setFillColor(sf::Color(100, 150, 250)); // Blue highlight
                 if (event.type == sf::Event::MouseButtonPressed &&
                     event.mouseButton.button == sf::Mouse::Left) {
+                    sound.play();
+                   
                     isHowToPlayVisible = true; // Show the "How to Play" overlay
+					
                 }
             }
             else {
                 howToPlayText.setFillColor(sf::Color::White);
+                sound.stop();
             }
+
 
             // Close How to Play overlay when clicking outside
             if (isHowToPlayVisible &&
                 event.type == sf::Event::MouseButtonPressed &&
                 event.mouseButton.button == sf::Mouse::Left) {
+                
                 sf::FloatRect overlayBounds = howToPlayBackground.getGlobalBounds();
 
                 // Only close if the click is outside the bounds of the overlay
@@ -239,6 +381,9 @@ bool MainMenu::run(sf::RenderWindow& window, Game& game) {
             }
 
         }
+
+       
+       
 
         // Existing animation code...
         float time = animationClock.getElapsedTime().asSeconds();
@@ -285,8 +430,17 @@ bool MainMenu::run(sf::RenderWindow& window, Game& game) {
             window.draw(playText);
             window.draw(exitText);
             window.draw(howToPlayText);
+            window.draw(optionsText);
 
         }
+
+        if (isOptionsVisible) {
+            window.draw(optionsBackground);
+            window.draw(volumeText);
+            window.draw(volumeSliderBackground);
+            window.draw(volumeSlider);
+        }
+      
 
         window.display();
     }

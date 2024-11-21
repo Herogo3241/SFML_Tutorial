@@ -19,9 +19,12 @@ private:
 	sf::Vector2f exitBounds;
 	sf::Vector2f star;
 	sf::Vector2f time;
+	sf::SoundBuffer buffer;
+	
 
 public:
     GameOverScreen(sf::RenderWindow& window);
+	sf::Sound sound;
     bool run(sf::RenderWindow& window, Game& game);  // Handle game over logic
     sf::RectangleShape background;
 };

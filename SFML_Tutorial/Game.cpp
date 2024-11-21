@@ -10,6 +10,10 @@ Game::Game()
     currentHealthWidth(400.0f), targetHealthWidth(400.0f), smoothness(0.1f), scoreRenderer(font),
     isPaused(false)
 {
+
+	sf::Image icon;
+	icon.loadFromFile("icon.png");
+	window.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
         
 
     window.setFramerateLimit(60);
@@ -107,6 +111,13 @@ Game::Game()
     pauseButton.setFillColor(sf::Color(100, 100, 100, 200));
     pauseButton.setPosition(window.getSize().x - 100, 40);
 
+    // handling click sound
+	if (!clickBuffer.loadFromFile("click.mp3")) {
+		throw std::runtime_error("Failed to load sound effect");
+	}
+	clickSound.setBuffer(clickBuffer);
+
+
 }
 
 void Game::updateHealthBar() {
@@ -190,7 +201,7 @@ void Game::handleCollisions() {
                     enemy.handleCollision(100);
 					enemy.burstEffect();
 					enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](Enemy& e) {return e.isDestroyed; }), enemies.end());
-                    score += 10;
+                    score += 5;
                     return true;
                 }
             }
@@ -289,12 +300,16 @@ void Game::render() {
 }
 
 bool Game::run(std::string state) {
-	
+    
     while (window.isOpen()) {
+        if (state != "Playing") {
+            reset();
+        }
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed ||
                 (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)) {
+                clickSound.play();
 				isPaused = !isPaused;
 
                 
@@ -308,6 +323,7 @@ bool Game::run(std::string state) {
                 event.mouseButton.button == sf::Mouse::Left) {
                 sf::Vector2i mousePos = sf::Mouse::getPosition(window);
                 if (pauseButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    clickSound.play();
                     isPaused = !isPaused;
                 }
 
@@ -337,6 +353,7 @@ bool Game::run(std::string state) {
                     resumeText.setFillColor(sf::Color(255, 215, 0)); // Gold color
                     if (event.type == sf::Event::MouseButtonPressed &&
                         event.mouseButton.button == sf::Mouse::Left) {
+                        clickSound.play();
                         isPaused = !isPaused;
                         return true;
                         
@@ -350,6 +367,7 @@ bool Game::run(std::string state) {
                     restartText.setFillColor(sf::Color(255, 215, 0)); // Gold color
                     if (event.type == sf::Event::MouseButtonPressed &&
                         event.mouseButton.button == sf::Mouse::Left) {
+                        clickSound.play();
                         reset();
                         isPaused = !isPaused;
                         return true;
@@ -364,6 +382,7 @@ bool Game::run(std::string state) {
                     exitText.setFillColor(sf::Color(220, 20, 60)); // Crimson
                     if (event.type == sf::Event::MouseButtonPressed &&
                         event.mouseButton.button == sf::Mouse::Left) {
+                        clickSound.play();
                         window.close();
                         return false;
                     }

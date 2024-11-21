@@ -6,8 +6,8 @@
 int main() {
     
     Game game;
-    MainMenu mainMenu(game.getWindow());
     GameOverScreen gameOverScreen(game.getWindow());
+    MainMenu mainMenu(game.getWindow());
 
     enum class GameState { MENU, PLAYING, GAME_OVER };
     GameState state = GameState::MENU;
@@ -17,7 +17,7 @@ int main() {
     while (true) {
         switch (state) {
         case GameState::MENU:
-            if (mainMenu.run(game.getWindow(), game)) {
+            if (mainMenu.run(game.getWindow(), game, gameOverScreen)) {
                 state = GameState::PLAYING;
             }
             break;

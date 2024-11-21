@@ -106,7 +106,7 @@ void Player::draw(sf::RenderWindow& window)
     {
         float alpha = 255 * (static_cast<float>(i) / trailPositions.size());
 		float size = 10.0f * (static_cast<float>(i) / trailPositions.size());
-        sf::CircleShape trailShape(size); // Smaller circles for the trail
+        sf::CircleShape trailShape(size, 5); 
         trailShape.setPosition(trailPositions[i]);
         trailShape.setOrigin(trailShape.getRadius(), trailShape.getRadius());
         trailShape.setFillColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(alpha))); // Fading effect

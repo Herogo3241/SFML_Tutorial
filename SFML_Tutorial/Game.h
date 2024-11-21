@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <vector>
 #include "Player.h"
 #include "Bullets.h"
@@ -50,9 +51,13 @@ private:
     void update(float deltaTime);
     void render();
 
+    sf::SoundBuffer clickBuffer;
+    
+
 public:
     int score;
     bool isPaused = false;
+    sf::Sound clickSound;
     sf::RectangleShape pauseButton;
     sf::RectangleShape playButton;
     Game();

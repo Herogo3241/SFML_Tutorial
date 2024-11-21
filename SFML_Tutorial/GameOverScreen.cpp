@@ -87,6 +87,11 @@ GameOverScreen::GameOverScreen(sf::RenderWindow& window) {
         window.getSize().x / 2.0f,
         window.getSize().y * 0.4f
     );
+
+    // Click Sound
+	buffer.loadFromFile("click.mp3");
+	sound.setBuffer(buffer);
+
 }
 
 bool GameOverScreen::run(sf::RenderWindow& window, Game& game) {
@@ -114,6 +119,7 @@ bool GameOverScreen::run(sf::RenderWindow& window, Game& game) {
                 restartText.setFillColor(sf::Color(255, 215, 0)); // Gold color
                 if (event.type == sf::Event::MouseButtonPressed &&
                     event.mouseButton.button == sf::Mouse::Left) {
+					sound.play();
                     return true; // Restart game
                 }
             }
@@ -126,6 +132,7 @@ bool GameOverScreen::run(sf::RenderWindow& window, Game& game) {
                 exitText.setFillColor(sf::Color(220, 20, 60)); // Crimson
                 if (event.type == sf::Event::MouseButtonPressed &&
                     event.mouseButton.button == sf::Mouse::Left) {
+                    sound.play();
                     window.close();
                     return false;
                 }
