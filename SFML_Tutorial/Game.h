@@ -7,12 +7,14 @@
 #include "Bullets.h"
 #include "Enemy.h"
 #include "Collisions.h"
+#include "ScoreRenderer.h"
 
 class Game {
 private:
     sf::RenderWindow window;
     sf::View camera;
     sf::RectangleShape background;
+    sf::RectangleShape gradientOverlay;
     Player player;
     std::vector<Bullet> bullets;
     std::vector<Enemy> enemies;
@@ -24,8 +26,16 @@ private:
 
     sf::Text scoreText;
     sf::Font font;
+	sf::Text pauseText;
+	sf::Text shadowText;
 
-    int score;
+	sf::Text exitText;
+	sf::Text restartText;
+	sf::Text resumeText;
+
+    ScoreRenderer scoreRenderer;
+
+    
     int health;
     float currentHealthWidth;
     float targetHealthWidth;
@@ -41,8 +51,12 @@ private:
     void render();
 
 public:
+    int score;
+    bool isPaused = false;
+    sf::RectangleShape pauseButton;
+    sf::RectangleShape playButton;
     Game();
-    bool run();
+    bool run(std::string state);
 	void reset();
     sf::RenderWindow& getWindow() { return window; };
 };

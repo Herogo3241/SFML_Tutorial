@@ -13,7 +13,7 @@ Enemy::Enemy(sf::Vector2f position) {
 void Enemy::update(float deltaTime, const sf::Vector2f& playerPosition) {
     if (isDestroyed) {
         // Handle burst animation after destruction
-        burstEffect();
+		
     }
     else {
         // Regular movement towards player
@@ -22,6 +22,7 @@ void Enemy::update(float deltaTime, const sf::Vector2f& playerPosition) {
             direction = direction / std::sqrt(direction.x * direction.x + direction.y * direction.y);  // Normalize
             shape.move(direction * deltaTime * 100.f);  // Speed of movement
         }
+
     }
 }
 
@@ -54,22 +55,26 @@ void Enemy::handleEnemyCollision(Enemy& other)
 }
 
 
+void Enemy::burstEffect() {
+    if (damageClock.getElapsedTime().asSeconds() < 0.1f) {	
+        /*burstRadius += 50.f;
+        shape.setRadius(burstRadius);
+        shape.setFillColor(sf::Color::Yellow);  
+		damageClock.restart();*/
+    }
+    else {
+        isDestroyed = true;
+    }
+
+}
+
 void Enemy::takeDamage(int damage) {
     if (isDestroyed) return;  // If the enemy is already destroyed, ignore further damage
-
     health -= damage;  // Decrease health
-    if (health <= 0) {
-        isDestroyed = true;  // Mark the enemy as destroyed when health reaches 0
-    }
+   
 }
 
-void Enemy::burstEffect() {
-    if (burstRadius < 50.f) {  // Limit the size of the burst
-        burstRadius += 1.f;  // Increase the burst radius
-        shape.setRadius(burstRadius);  // Increase the size of the shape
-        shape.setFillColor(sf::Color::Yellow);  // Change color for burst effect
-    }
-}
+
 
 void Enemy::handleCollision(int damage) {
     takeDamage(damage);  // Apply damage when a collision happens

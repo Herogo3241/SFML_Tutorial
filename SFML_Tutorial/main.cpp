@@ -4,27 +4,32 @@
 #include "GameOverScreen.h"
 
 int main() {
-    MainMenu mainMenu;
+    
     Game game;
-    GameOverScreen gameOverScreen;
+    MainMenu mainMenu(game.getWindow());
+    GameOverScreen gameOverScreen(game.getWindow());
 
     enum class GameState { MENU, PLAYING, GAME_OVER };
     GameState state = GameState::MENU;
 
+	std::string stateString = "Main Menu";
+
     while (true) {
         switch (state) {
         case GameState::MENU:
-            if (mainMenu.run(game.getWindow())) {
+            if (mainMenu.run(game.getWindow(), game)) {
                 state = GameState::PLAYING;
             }
             break;
         case GameState::PLAYING:
-            if (!game.run()) { // Game over
+            stateString = "Playing";
+            if (!game.run(stateString)) { // Game over
+				stateString = "Game Over";
                 state = GameState::GAME_OVER;
             }
             break;
         case GameState::GAME_OVER:
-            if (gameOverScreen.run(game.getWindow())) {
+            if (gameOverScreen.run(game.getWindow(), game)) {
                 state = GameState::MENU;
                 game.reset(); // Reset the game before going back to the menu
             }

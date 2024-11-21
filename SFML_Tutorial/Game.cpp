@@ -7,11 +7,17 @@ Game::Game()
     camera(sf::FloatRect(0, 0, window.getSize().x, window.getSize().y)),
     player(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2)),
     score(0), health(200),
-    currentHealthWidth(400.0f), targetHealthWidth(400.0f), smoothness(0.1f)
+    currentHealthWidth(400.0f), targetHealthWidth(400.0f), smoothness(0.1f), scoreRenderer(font),
+    isPaused(false)
 {
+        
+
     window.setFramerateLimit(60);
-    background.setSize(sf::Vector2f(window.getSize().x * 2, window.getSize().y * 2));
-    background.setFillColor(sf::Color(100, 100, 250));
+    background.setSize(sf::Vector2f(window.getSize().x, window.getSize().y));
+    background.setFillColor(sf::Color(20, 20, 40)); 
+
+    gradientOverlay.setSize(sf::Vector2f(window.getSize().x, window.getSize().y));
+    gradientOverlay.setFillColor(sf::Color(0, 0, 0, 100));
 
     healthBarBackground.setSize(sf::Vector2f(400, 20));
     healthBarBackground.setFillColor(sf::Color(50, 50, 50));
@@ -35,10 +41,72 @@ Game::Game()
         throw std::runtime_error("Failed to load font");
     }
 
-    scoreText.setFont(font);
-    scoreText.setCharacterSize(24);
-    scoreText.setFillColor(sf::Color::White);
-    scoreText.setStyle(sf::Text::Bold);
+	sf::Vector2f scorePosition = sf::Vector2f(window.getSize().x - 600 - std::to_string(score).length(), 40);
+
+    pauseText.setFont(font);
+    pauseText.setString("PAUSED");
+    pauseText.setCharacterSize(120);
+    pauseText.setFillColor(sf::Color(220, 20, 60)); // Crimsion red
+    pauseText.setStyle(sf::Text::Bold);
+
+    sf::FloatRect textBounds = pauseText.getLocalBounds();
+    pauseText.setOrigin(textBounds.left + textBounds.width / 2.0f, textBounds.top);
+    pauseText.setPosition(
+        window.getSize().x / 2.0f,
+        window.getSize().y * 0.2f
+    );
+
+    shadowText = pauseText;
+    shadowText.setFillColor(sf::Color(255, 255, 255, 50));
+    shadowText.move(5, 5);
+
+    exitText.setFont(font);
+    exitText.setString("EXIT GAME");
+    exitText.setCharacterSize(48);
+    exitText.setFillColor(sf::Color::White);
+
+    // Center exit text
+    sf::FloatRect exitBounds = exitText.getLocalBounds();
+    exitText.setOrigin(exitBounds.left + exitBounds.width / 2.0f, exitBounds.top);
+    exitText.setPosition(
+        window.getSize().x / 2.0f,
+		window.getSize().y * 0.7f
+    );
+
+    restartText.setFont(font);
+    restartText.setString("RESTART GAME");
+    restartText.setCharacterSize(48);
+    restartText.setFillColor(sf::Color::White);
+
+    // Center restart text
+    sf::FloatRect restartBounds = restartText.getLocalBounds();
+    restartText.setOrigin(restartBounds.left + restartBounds.width / 2.0f, restartBounds.top);
+    restartText.setPosition(
+        window.getSize().x / 2.0f,
+        window.getSize().y * 0.6f
+    );
+
+
+    resumeText.setFont(font);
+    resumeText.setString("RESUME GAME");
+    resumeText.setCharacterSize(48);
+    resumeText.setFillColor(sf::Color::White);
+
+    // Center restart text
+    sf::FloatRect resumeBounds = resumeText.getLocalBounds();
+    resumeText.setOrigin(resumeBounds.left + resumeBounds.width / 2.0f, resumeBounds.top);
+    resumeText.setPosition(
+        window.getSize().x / 2.0f,
+        window.getSize().y * 0.5f
+    );
+
+
+
+
+    pauseButton.setSize(sf::Vector2f(50, 50));
+    pauseButton.setFillColor(sf::Color(100, 100, 100, 200));
+    pauseButton.setPosition(window.getSize().x - 100, 40);
+
 }
 
 void Game::updateHealthBar() {
@@ -66,14 +134,32 @@ void Game::spawnEnemies() {
     while (enemies.size() < 30) {
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> xDist(0, window.getSize().x - 10.f);
-        std::uniform_int_distribution<int> yDist(0, window.getSize().y - 10.f);
+
+        // Extended spawn area beyond screen boundaries
+        float extendedWidth = window.getSize().x + 200.f;
+        float extendedHeight = window.getSize().y + 200.f;
+
+        std::uniform_int_distribution<int> xDist(-100, extendedWidth);
+        std::uniform_int_distribution<int> yDist(-100, extendedHeight);
 
         float positionX = xDist(gen);
         float positionY = yDist(gen);
 
-        if (std::hypot(positionX - player.shape.getPosition().x, positionY - player.shape.getPosition().y) < 100.0f) {
+        // Check distance from player
+        float distanceToPlayer = std::hypot(
+            positionX - player.shape.getPosition().x,
+            positionY - player.shape.getPosition().y
+        );
+
+        // Ensure enemy spawns outside 100-pixel radius of player
+        if (distanceToPlayer < 400.0f) {
             continue;
+        }
+
+        // Optional: Add screen boundary check if needed
+        if (positionX < 0 || positionX > window.getSize().x ||
+            positionY < 0 || positionY > window.getSize().y) {
+            // Enemy spawns outside visible screen
         }
 
         enemies.emplace_back(sf::Vector2f(positionX, positionY));
@@ -100,8 +186,10 @@ void Game::handleCollisions() {
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
         [this](Bullet& bullet) {
             for (auto& enemy : enemies) {
-                if (Collisions::checkBulletCollision(enemy.shape, bullet.shape)) {
+                if (Collisions::checkBulletCollision(enemy.shape, bullet.shape)) {           
                     enemy.handleCollision(100);
+					enemy.burstEffect();
+					enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](Enemy& e) {return e.isDestroyed; }), enemies.end());
                     score += 10;
                     return true;
                 }
@@ -109,12 +197,12 @@ void Game::handleCollisions() {
             return false;
         }), bullets.end());
 
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](Enemy& e) { return !e.isAlive(); }), enemies.end());
+    //enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](Enemy& e) {e.burstEffect(); return e.isDestroyed; }), enemies.end());
 }
 
 void Game::update(float deltaTime) {
     camera.setCenter(player.shape.getPosition());
-    background.setPosition(player.shape.getPosition() * 0.5f);
+    
 
     player.update(deltaTime, sf::Keyboard(), bullets, enemies, window);
 
@@ -129,46 +217,173 @@ void Game::update(float deltaTime) {
     handleCollisions();
     updateHealthBar();
 
-    scoreText.setString("Score: " + std::to_string(score));
+
+    scoreRenderer.updateScore(score,
+        sf::Vector2f(window.getSize().x - 600 - std::to_string(score).length(), 40));
+    scoreRenderer.updateParticles(deltaTime);
 }
 
 void Game::render() {
     window.clear(sf::Color::Black);
-    //window.draw(background);
-    window.draw(player.shape);
+    window.draw(background);
+    window.draw(gradientOverlay);
+	player.draw(window);
     for (const auto& enemy : enemies) {
         window.draw(enemy.shape);
     }
     for (const auto& bullet : bullets) {
         window.draw(bullet.shape);
     }
-    window.draw(scoreText);
+    scoreRenderer.draw(window);
     window.draw(healthBarBackground);
     if (currentHealthWidth > 20) {
         window.draw(leftEdge);
         window.draw(rightEdge);
     }
     window.draw(healthBarForeground);
+
+    window.draw(pauseButton);
+
+    // Pause icon (two vertical rectangles)
+    if (!isPaused) {
+        // Pause icon: two vertical bars
+        sf::RectangleShape pauseBar1, pauseBar2;
+        pauseBar1.setSize(sf::Vector2f(10, 30));
+        pauseBar2.setSize(sf::Vector2f(10, 30));
+
+        pauseBar1.setFillColor(sf::Color::White);
+        pauseBar2.setFillColor(sf::Color::White);
+
+        pauseBar1.setPosition(pauseButton.getPosition().x + 10, pauseButton.getPosition().y + 10);
+        pauseBar2.setPosition(pauseButton.getPosition().x + 30, pauseButton.getPosition().y + 10);
+
+        window.draw(pauseBar1);
+        window.draw(pauseBar2);
+    }
+    else {
+        // Play icon: triangle pointing right
+        sf::ConvexShape playTriangle;
+        playTriangle.setPointCount(3);
+        playTriangle.setPoint(0, sf::Vector2f(pauseButton.getPosition().x + 15, pauseButton.getPosition().y + 10));
+        playTriangle.setPoint(1, sf::Vector2f(pauseButton.getPosition().x + 15, pauseButton.getPosition().y + 40));
+        playTriangle.setPoint(2, sf::Vector2f(pauseButton.getPosition().x + 40, pauseButton.getPosition().y + 25));
+
+        playTriangle.setFillColor(sf::Color::White);
+
+        window.draw(playTriangle);
+
+
+
+		window.draw(pauseText);
+		window.draw(shadowText);
+		window.draw(exitText);
+		window.draw(restartText);
+		window.draw(resumeText);
+
+
+    }
+
+
+
     window.display();
 }
 
-bool Game::run() {
+bool Game::run(std::string state) {
+	
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed ||
                 (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)) {
-                return false;
+				isPaused = !isPaused;
+
+                
             }
+
+            sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+            // Handle pause button click
+
+            if (event.type == sf::Event::MouseButtonPressed &&
+                event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                if (pauseButton.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    isPaused = !isPaused;
+                }
+
+                
+            }
+
+            
         }
 
-        float deltaTime = clock.restart().asSeconds();
-        spawnEnemies();
-        update(deltaTime);
-        render();
+        
+
+        if (state == "Playing") {
+            float deltaTime = clock.restart().asSeconds();
+
+            if (!isPaused) {
+                spawnEnemies();
+                update(deltaTime);
+                
+
+                
+            }
+            else {
+
+                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+                if (resumeText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    resumeText.setFillColor(sf::Color(255, 215, 0)); // Gold color
+                    if (event.type == sf::Event::MouseButtonPressed &&
+                        event.mouseButton.button == sf::Mouse::Left) {
+                        isPaused = !isPaused;
+                        return true;
+                        
+                    }
+                }
+                else {
+                    restartText.setFillColor(sf::Color::White);
+                }
+
+                if (restartText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    restartText.setFillColor(sf::Color(255, 215, 0)); // Gold color
+                    if (event.type == sf::Event::MouseButtonPressed &&
+                        event.mouseButton.button == sf::Mouse::Left) {
+                        reset();
+                        isPaused = !isPaused;
+                        return true;
+                    }
+                }
+                else {
+                    restartText.setFillColor(sf::Color::White);
+                }
+
+                // Handle exit text click
+                if (exitText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    exitText.setFillColor(sf::Color(220, 20, 60)); // Crimson
+                    if (event.type == sf::Event::MouseButtonPressed &&
+                        event.mouseButton.button == sf::Mouse::Left) {
+                        window.close();
+                        return false;
+                    }
+                }
+                else {
+                    exitText.setFillColor(sf::Color::White);
+                }
+
+                
+				
+			}
+
+            render();
+            
+
+            
+        }
 
         if (health <= 0) {
-            return false; 
+            return false;
         }
     }
 
@@ -177,7 +392,7 @@ bool Game::run() {
 
 
 void Game::reset() {
-	player = Player(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
+	player.reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
 	bullets.clear();
 	enemies.clear();
 	score = 0;
@@ -185,5 +400,9 @@ void Game::reset() {
 	currentHealthWidth = 400.0f;
 	targetHealthWidth = 400.0f;
 	smoothness = 0.1f;
+    scoreRenderer.updateScore(score,
+        sf::Vector2f(window.getSize().x - 200 - std::to_string(score).length(), 40));
+
+	
 }
 

@@ -2,10 +2,10 @@
 #include "Collisions.h"
 
 
-Player::Player(sf::Vector2f position) : currentAngle(0.0f), velocity(0.0f, 0.0f)
+Player::Player(sf::Vector2f position) : currentAngle(0.0f), velocity(0.0f, 0.0f), isDamaged(false)
 {
     shape.setRadius(10.0f);
-    shape.setPointCount(3);
+    shape.setPointCount(5);
     shape.setOrigin(shape.getRadius(), shape.getRadius());
     shape.setPosition(position);
     shape.setFillColor(sf::Color::White);
@@ -15,6 +15,13 @@ Player::Player(sf::Vector2f position) : currentAngle(0.0f), velocity(0.0f, 0.0f)
 
 void Player::update(float deltaTime, const sf::Keyboard& keyboard, std::vector<Bullet>& bullets, std::vector<Enemy>& enemies, const sf::RenderWindow& window)
 {
+    if (isDamaged && damageClock.getElapsedTime().asSeconds() > 0.1f)
+    {
+        isDamaged = false;
+        shape.setFillColor(sf::Color::White);
+        shape.setOutlineColor(sf::Color::White);
+    }
+
     // Handle keyboard input for movement
     if (keyboard.isKeyPressed(sf::Keyboard::W))
     {
@@ -33,38 +40,88 @@ void Player::update(float deltaTime, const sf::Keyboard& keyboard, std::vector<B
         velocity.x += acceleration;
     }
 
-    // Apply friction to simulate space-like movement
-    sf::Vector2f oldPosition = shape.getPosition() + sf::Vector2f(2.f, 2.f);
+    // Apply friction
     velocity *= friction;
 
-    // Update the player's position
+    // Update position
     shape.move(velocity * deltaTime * 100.f);
 
-    
+    // Boundary constraint
+    sf::FloatRect playerBounds = shape.getGlobalBounds();
+    float playerRadius = shape.getRadius();
 
-    // Get the mouse position relative to the window
+    // Get window boundaries
+    float windowWidth = window.getSize().x;
+    float windowHeight = window.getSize().y;
+
+    float bufferX = 30.0f;
+    float bufferY = 30.0f;
+
+    // Constrain X-axis with extended limits
+    if (shape.getPosition().x + playerRadius < -bufferX)
+    {
+        shape.setPosition(-bufferX - playerRadius, shape.getPosition().y);
+        velocity.x = 0;
+    }
+    else if (shape.getPosition().x - playerRadius > windowWidth + bufferX)
+    {
+        shape.setPosition(windowWidth + bufferX + playerRadius, shape.getPosition().y);
+        velocity.x = 0;
+    }
+
+    // Constrain Y-axis with extended limits
+    if (shape.getPosition().y + playerRadius < -bufferY)
+    {
+        shape.setPosition(shape.getPosition().x, -bufferY - playerRadius);
+        velocity.y = 0;
+    }
+    else if (shape.getPosition().y - playerRadius > windowHeight + bufferY)
+    {
+        shape.setPosition(shape.getPosition().x, windowHeight + bufferY + playerRadius);
+        velocity.y = 0;
+    }
+
+    // Add position to the trail
+    trailPositions.push_back(shape.getPosition());
+    if (trailPositions.size() > maxTrailLength)
+    {
+        trailPositions.erase(trailPositions.begin());
+    }
+
+    // Mouse handling
     sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
     sf::Vector2f mouseWorldPosition = window.mapPixelToCoords(mousePosition);
-
-    // Compute the angle to the mouse
     sf::Vector2f playerPosition = shape.getPosition();
     float angleToMouse = std::atan2(mouseWorldPosition.y - playerPosition.y, mouseWorldPosition.x - playerPosition.x) * 180 / M_PI;
-
-    // Check if the mouse is clicked (left button)
-    
-        // Smoothly rotate towards the mouse click position
-        currentAngle = interpolateAngle(currentAngle, angleToMouse + 90, rotationSpeed * 0.05f);
-        shape.setRotation(currentAngle);
-    
+    currentAngle = interpolateAngle(currentAngle, angleToMouse + 90, rotationSpeed * 0.05f);
+    shape.setRotation(currentAngle);
 
     handleShooting(bullets);
- 
 }
+
+void Player::draw(sf::RenderWindow& window)
+{
+    // Draw trail
+    for (size_t i = 0; i < trailPositions.size(); ++i)
+    {
+        float alpha = 255 * (static_cast<float>(i) / trailPositions.size());
+		float size = 10.0f * (static_cast<float>(i) / trailPositions.size());
+        sf::CircleShape trailShape(size); // Smaller circles for the trail
+        trailShape.setPosition(trailPositions[i]);
+        trailShape.setOrigin(trailShape.getRadius(), trailShape.getRadius());
+        trailShape.setFillColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(alpha))); // Fading effect
+        window.draw(trailShape);
+    }
+
+    // Draw player
+	window.draw(shape);
+}
+
 
 void Player::handleShooting(std::vector<Bullet>& bullets) const
 {
     static bool canShoot = true; // Used to manage shooting state
-    if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Space) || sf::Mouse::isButtonPressed(sf::Mouse::Left)) && canShoot)
+    if ( sf::Mouse::isButtonPressed(sf::Mouse::Left) && canShoot)
     {
         sf::Vector2f position = shape.getPosition();
         float angle = shape.getRotation() - 90; // Adjust for orientation
@@ -74,7 +131,7 @@ void Player::handleShooting(std::vector<Bullet>& bullets) const
 
         canShoot = false; // Prevent continuous shooting 
     }
-    else if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && !sf::Mouse::isButtonPressed(sf::Mouse::Left)
+    else if ( !sf::Mouse::isButtonPressed(sf::Mouse::Left)
         //&& !sf::Mouse::isButtonPressed(sf::Mouse::Left)
         )
     {
@@ -103,6 +160,24 @@ float Player::interpolateAngle(float current, float target, float speed)
 int Player::takeDamage(int health, Enemy& enemy)
 {
     health -= 1;
+	flashRedTint();
 	return health;
 }
 
+void Player::flashRedTint()
+{
+    isDamaged = true;
+	shape.setFillColor(sf::Color::Red);
+    shape.setOutlineColor(sf::Color::Red);
+	damageClock.restart();
+
+}
+
+void Player::reset(sf::Vector2f pos) {
+	shape.setPosition(pos);
+	velocity = sf::Vector2f(0, 0);
+	currentAngle = 0;
+	trailPositions.clear();
+	isDamaged = false;
+	damageClock.restart();
+}

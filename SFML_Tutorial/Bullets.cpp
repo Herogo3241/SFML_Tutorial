@@ -4,8 +4,8 @@
 
 Bullet::Bullet(sf::Vector2f position, float angle)
 {
-    shape.setRadius(3.0f);
-    shape.setFillColor(sf::Color::White);
+    shape.setRadius(5.0f);
+    shape.setFillColor(sf::Color::Yellow);
     shape.setPosition(position);
 
     // Calculate velocity based on the angle (convert to radians)
