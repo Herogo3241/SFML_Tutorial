@@ -145,7 +145,7 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
         "S - Move Down\n"
         "D - Move Right\n\n"
         "SHOOTING:\n"
-        "SPACEBAR or LEFT MOUSE - Shoot\n\n"
+        "LEFT MOUSE - Shoot\n\n"
         "OBJECTIVE:\n"
         "- Survive and destroy enemies\n"
         "- Avoid enemy collisions\n"
