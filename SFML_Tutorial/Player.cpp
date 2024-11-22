@@ -167,11 +167,41 @@ int Player::takeDamage(int health, Enemy& enemy)
 void Player::flashRedTint()
 {
     isDamaged = true;
-	shape.setFillColor(sf::Color::Red);
-    shape.setOutlineColor(sf::Color::Red);
+	updateGlowEffect();
 	damageClock.restart();
 
 }
+
+
+void Player::updateGlowEffect()
+{
+    float time = glowClock.getElapsedTime().asSeconds();
+
+    // Create a sine wave oscillation between 0 and 1
+    float pulseIntensity = (std::sin(time * 4.0f) + 1.0f) / 2.0f;
+
+    // Base color (medium green)
+    sf::Color baseColor(0, 255, 127);  // Spring green
+
+    // Glow color (bright neon green)
+    sf::Color glowColor(0, 255, 0);  
+
+    // Interpolate between base color and glow color
+    sf::Color currentColor(
+        baseColor.r + (glowColor.r - baseColor.r) * pulseIntensity,
+        baseColor.g + (glowColor.g - baseColor.g) * pulseIntensity,
+        baseColor.b + (glowColor.b - baseColor.b) * pulseIntensity
+    );
+
+    shape.setFillColor(currentColor);
+
+    // Create an outer glow using outline
+    sf::Color outlineColor = glowColor;
+    outlineColor.a = 128 + (127 * pulseIntensity); // Pulsing transparency
+    shape.setOutlineThickness(5.0f + (2.0f * pulseIntensity)); // Pulsing thickness
+    shape.setOutlineColor(outlineColor);
+}
+
 
 void Player::reset(sf::Vector2f pos) {
 	shape.setPosition(pos);
@@ -181,3 +211,5 @@ void Player::reset(sf::Vector2f pos) {
 	isDamaged = false;
 	damageClock.restart();
 }
+
+

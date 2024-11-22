@@ -30,9 +30,11 @@ public:
 
 private:
     sf::Clock damageClock;
+    sf::Clock glowClock;
     bool isDamaged;
     float interpolateAngle(float current, float target, float speed);
     void flashRedTint();
+	void updateGlowEffect();
 };
 
 #endif // PLAYER_H

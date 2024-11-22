@@ -8,6 +8,8 @@ Bullet::Bullet(sf::Vector2f position, float angle)
     shape.setFillColor(sf::Color::Yellow);
     shape.setPosition(position);
 
+    
+
     // Calculate velocity based on the angle (convert to radians)
     float radianAngle = angle * M_PI / 180;
     velocity.x = std::cos(radianAngle) * 5.0f; // Bullet speed
@@ -17,6 +19,9 @@ Bullet::Bullet(sf::Vector2f position, float angle)
 void Bullet::update(float deltaTime)
 {
     shape.move(velocity * deltaTime * 500.f);
+    
 }
+
+
 
 

@@ -15,6 +15,8 @@ public:
 
     Bullet(sf::Vector2f position, float angle);
     void update(float deltaTime);
+
 };
 
-#endif // BULLET_H
+
+#endif // BULLET_H class Bullet

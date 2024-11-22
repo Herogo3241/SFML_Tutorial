@@ -208,11 +208,15 @@ void Game::handleCollisions() {
             return false;
         }), bullets.end());
 
-    //enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](Enemy& e) {e.burstEffect(); return e.isDestroyed; }), enemies.end());
+	
+
+ 
 }
 
 void Game::update(float deltaTime) {
     camera.setCenter(player.shape.getPosition());
+
+    
     
 
     player.update(deltaTime, sf::Keyboard(), bullets, enemies, window);
@@ -221,11 +225,15 @@ void Game::update(float deltaTime) {
         enemy.update(deltaTime, player.shape.getPosition());
     }
 
+
+
     for (auto& bullet : bullets) {
         bullet.update(deltaTime);
     }
 
     handleCollisions();
+
+    
     updateHealthBar();
 
 
@@ -242,8 +250,8 @@ void Game::render() {
     for (const auto& enemy : enemies) {
         window.draw(enemy.shape);
     }
-    for (const auto& bullet : bullets) {
-        window.draw(bullet.shape);
+    for (auto& bullet : bullets) {
+		window.draw(bullet.shape);
     }
     scoreRenderer.draw(window);
     window.draw(healthBarBackground);
@@ -338,6 +346,8 @@ bool Game::run(std::string state) {
         if (state == "Playing") {
             float deltaTime = clock.restart().asSeconds();
 
+            
+
             if (!isPaused) {
                 spawnEnemies();
                 update(deltaTime);
@@ -360,7 +370,7 @@ bool Game::run(std::string state) {
                     }
                 }
                 else {
-                    restartText.setFillColor(sf::Color::White);
+                    resumeText.setFillColor(sf::Color::White);
                 }
 
                 if (restartText.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
@@ -383,7 +393,7 @@ bool Game::run(std::string state) {
                     if (event.type == sf::Event::MouseButtonPressed &&
                         event.mouseButton.button == sf::Mouse::Left) {
                         clickSound.play();
-                        window.close();
+                        window.close(); 
                         return false;
                     }
                 }
@@ -396,6 +406,8 @@ bool Game::run(std::string state) {
 			}
 
             render();
+
+            
             
 
             
@@ -405,6 +417,7 @@ bool Game::run(std::string state) {
             return false;
         }
     }
+
 
     return false;
 }

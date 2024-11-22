@@ -132,6 +132,8 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
         window.getSize().x * 0.1f,
         window.getSize().y * 0.15f
     );
+	howToPlayBackground.setOutlineThickness(5);
+	howToPlayBackground.setOutlineColor(sf::Color(255,255,255, 100));
 
     // How to Play Instructions
     howToPlayInstructions.setFont(font);
@@ -183,11 +185,14 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
 
     // Options Background
     optionsBackground.setSize(sf::Vector2f(window.getSize().x * 0.8f, window.getSize().y * 0.7f));
-    optionsBackground.setFillColor(sf::Color(0, 0, 0, 200));
+    optionsBackground.setFillColor(sf::Color(0, 0, 0));
     optionsBackground.setPosition(
         window.getSize().x * 0.1f,
         window.getSize().y * 0.15f
     );
+
+	optionsBackground.setOutlineThickness(5);
+	optionsBackground.setOutlineColor(sf::Color(255, 255, 255, 100));
 
     // Volume Slider Background
     volumeSliderBackground.setSize(sf::Vector2f(window.getSize().x * 0.6f, 10));
@@ -207,7 +212,7 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
 
     // Volume Text
     volumeText.setFont(font);
-    volumeText.setString("VOLUME");
+    volumeText.setString("VOLUME" );
     volumeText.setCharacterSize(36);
     volumeText.setFillColor(sf::Color::White);
     sf::FloatRect volumeTextBounds = volumeText.getLocalBounds();
@@ -222,7 +227,7 @@ MainMenu::MainMenu(sf::RenderWindow& window) {
     // Music 
 	buffer.loadFromFile("click.mp3");
 	sound.setBuffer(buffer);
-    
+	sound.setVolume(currentVolume * 100.0f);
 }
 
 bool MainMenu::run(sf::RenderWindow& window, Game& game, GameOverScreen& gameOver) {
