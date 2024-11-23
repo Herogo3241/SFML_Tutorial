@@ -205,6 +205,8 @@ void Player::updateGlowEffect()
 
 void Player::reset(sf::Vector2f pos) {
 	shape.setPosition(pos);
+	shape.setFillColor(sf::Color::White);
+    shape.setOutlineColor(sf::Color::White);
 	velocity = sf::Vector2f(0, 0);
 	currentAngle = 0;
 	trailPositions.clear();

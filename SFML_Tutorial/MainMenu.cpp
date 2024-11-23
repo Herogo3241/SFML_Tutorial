@@ -346,7 +346,7 @@ bool MainMenu::run(sf::RenderWindow& window, Game& game, GameOverScreen& gameOve
                     if (event.type == sf::Event::MouseButtonPressed &&
                         event.mouseButton.button == sf::Mouse::Left) {
                         sound.play();
-                        window.close();
+						window.close(); // Exit game
                         return false;
                     }
                 }

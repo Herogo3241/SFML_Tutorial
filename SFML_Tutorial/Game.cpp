@@ -427,6 +427,7 @@ void Game::reset() {
 	player.reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
 	bullets.clear();
 	enemies.clear();
+	spawnEnemies();
 	score = 0;
 	health = 200;
 	currentHealthWidth = 400.0f;

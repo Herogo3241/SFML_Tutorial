@@ -19,19 +19,28 @@ int main() {
         case GameState::MENU:
             if (mainMenu.run(game.getWindow(), game, gameOverScreen)) {
                 state = GameState::PLAYING;
+                game.reset();
+            }
+            else {
+				return 0; 
             }
             break;
         case GameState::PLAYING:
             stateString = "Playing";
             if (!game.run(stateString)) { // Game over
-				stateString = "Game Over";
+                stateString = "Game Over";
                 state = GameState::GAME_OVER;
             }
+            
             break;
         case GameState::GAME_OVER:
             if (gameOverScreen.run(game.getWindow(), game)) {
                 state = GameState::MENU;
                 game.reset(); // Reset the game before going back to the menu
+            }
+            else {
+
+                return 0;
             }
             break;
         }
